@@ -1,0 +1,1317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<!-- @(#)manual.html	1.13 05/09/15 -->
+  <meta content="deepa viswanathan" name="Author">
+  <meta content="Mozilla/4.04 [en] (WinNT; U) [Netscape]"
+ name="GENERATOR">
+  <title>HPROF Agent</title>
+  <meta name="author" content="Kelly O'Hair">
+</head>
+<body alink="#ff0000" bgcolor="#ffffff" link="#0000ee" text="#000000"
+ vlink="#551a8b">
+<h1 style="text-align: center;"><a name="mozTocId137594"
+ class="mozTocH1"></a><span style="font-weight: bold;"></span>HPROF
+Binary Format
+</h1>
+<span style="font-weight: bold; font-style: italic;">Taken from the
+HPROF manual (demo/jvmti/hprof/src/manual.html) delivered with the JDK.</span><br>
+<br>
+The basic fields in the binary output are u1 (1 byte), u2 (2 byte), u4
+(4 byte), and u8 (8 byte). An ID in this implementation is a u4,
+however the size of an ID is really determined by the "size of
+identifiers" field in the header.<br>
+<br>
+<span style="font-weight: bold;">WARNING</span>: This format is still
+considered highly experimental, however, all attempts were made to
+match the format of past HPROF implementations.<br>
+<br>
+The binary output begins with the information:<br>
+<br>
+<table style="text-align: left; width: 100%; height: 124px;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">[u1]*<br>
+      </td>
+      <td style="vertical-align: top;">An initial NULL terminated
+series of bytes representing the format name and version, in this
+implementation and historically, the string "JAVA PROFILE 1.0.1" (18
+u1 bytes) followed by a NULL byte. If the TAG "HEAP DUMP SEGMENT" is
+used this string will be "JAVA PROFILE 1.0.2". </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">u4<br>
+      </td>
+      <td style="vertical-align: top;">size of identifiers. Identifiers
+are used to represent UTF8 strings, objects, stack traces, etc. They
+can have the same size as host pointers or sizeof(void*), but are not
+required to be.<span style="color: rgb(0, 0, 0);"></span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">u4<br>
+      </td>
+      <td style="vertical-align: top;">high word of number of
+milliseconds since 0:00 GMT, 1/1/70</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">u4<br>
+      </td>
+      <td style="vertical-align: top;">low word of number of
+milliseconds since 0:00 GMT, 1/1/70</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+Followed by a se<span style="font-family: monospace;"></span>quence of
+records that look like:<br>
+<br>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">u1<br>
+      </td>
+      <td style="vertical-align: top;">TAG: denoting the type of the
+record</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">u4<br>
+      </td>
+      <td style="vertical-align: top;">TIME: number of microseconds
+since the
+time stamp in the header<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">u4<br>
+      </td>
+      <td style="vertical-align: top;">LENGTH: number of bytes that
+follow this
+u4 field and belong to this record<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">[u1]*<br>
+      </td>
+      <td style="vertical-align: top;">BODY: as many bytes as specified
+in
+the above u4 field<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+The following TAGs are supported:<br>
+<br>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">STRING IN UTF8<br>
+      </td>
+      <td style="vertical-align: top;">0x01<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">ID for this string<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">[u1]*<br>
+            </td>
+            <td style="vertical-align: top;">UTF8 characters for string
+(NOT NULL terminated)<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">LOAD CLASS<br>
+      </td>
+      <td style="vertical-align: top;">0x02<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">class serial number
+(always &gt; 0)<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">class object ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">stack trace serial number<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">class name string ID<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">UNLOAD CLASS<br>
+      </td>
+      <td style="vertical-align: top;">0x03<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">class serial number<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">STACK FRAME<br>
+      </td>
+      <td style="vertical-align: top;">0x04<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">stack frame ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">method name string ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">method signature string ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">source file name string ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">class serial number<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">&gt; 0<br>
+                  </td>
+                  <td style="vertical-align: top;">line number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">0<br>
+                  </td>
+                  <td style="vertical-align: top;">no line information
+available<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">-1<br>
+                  </td>
+                  <td style="vertical-align: top;">unknown location<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">-2<br>
+                  </td>
+                  <td style="vertical-align: top;">compiled method (<span
+ style="font-style: italic; color: rgb(255, 0, 0);">Not implemented</span>)<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">-3<br>
+                  </td>
+                  <td style="vertical-align: top;">native method (<span
+ style="color: rgb(255, 0, 0); font-style: italic;">Not implemented</span>)<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">STACK TRACE<br>
+      </td>
+      <td style="vertical-align: top;">0x05<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">stack trace serial number<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">thread serial number<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">number of frames<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">[ID]*<br>
+            </td>
+            <td style="vertical-align: top;">series of stack frame ID's<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ALLOC SITES<br>
+      </td>
+      <td style="vertical-align: top;">0x06<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u2<br>
+            </td>
+            <td style="vertical-align: top;">Bit mask flags:<br>
+            <table style="text-align: left; width: 441px; height: 74px;"
+ border="1" cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">0x1<br>
+                  </td>
+                  <td style="vertical-align: top;">incremental vs.
+complete<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">0x2<br>
+                  </td>
+                  <td style="vertical-align: top; text-align: left;">sorted
+by allocation vs. line<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">0x4<br>
+                  </td>
+                  <td style="vertical-align: top;">whether to force GC
+(<span style="font-style: italic; color: rgb(255, 0, 0);">Not
+Implemented</span>)<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">cutoff ratio (floating
+point)<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">total live bytes<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">total live instances<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u8<br>
+            </td>
+            <td style="vertical-align: top;">total bytes allocated<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u8<br>
+            </td>
+            <td style="vertical-align: top;">total instances allocated<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">number of sites that
+follow:<br>
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">u1<br>
+                  </td>
+                  <td style="vertical-align: top;">array indicator: 0
+means not an array, non-zero means an array of this type (See <a
+ href="#Basic_Type">Basic Type</a>)<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">class serial number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of live bytes<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of live
+instances<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of bytes
+allocated<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of instances
+allocated<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HEAP SUMMARY<br>
+      </td>
+      <td style="vertical-align: top;">0x07<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">total live bytes<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">total live instances<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u8<br>
+            </td>
+            <td style="vertical-align: top;">total bytes allocated<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u8<br>
+            </td>
+            <td style="vertical-align: top;">total instances allocated<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">START THREAD<br>
+      </td>
+      <td style="vertical-align: top;">0x0A<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">thread serial number<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">thread object ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">stack trace serial number<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">thread name string ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">thread group name ID<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ID<br>
+            </td>
+            <td style="vertical-align: top;">thread parent group name ID<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">END THREAD<br>
+      </td>
+      <td style="vertical-align: top;">0x0B<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">thread serial number<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HEAP DUMP<br>
+      <span style="font-style: italic;">or</span><br>
+HEAP DUMP SEGMENT<br>
+      </td>
+      <td style="vertical-align: top;">0x0C<br>
+      <span style="font-style: italic;">or</span><br>
+0x1C<br>
+      </td>
+      <td style="vertical-align: top;">Contains any number of sub-tags,
+each begins a u1 field (no order implied here):<br>
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">ROOT UNKNOWN<br>
+            </td>
+            <td style="vertical-align: top;">0xFF<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT JNI GLOBAL<br>
+            </td>
+            <td style="vertical-align: top;">0x01<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">JNI global ref ID<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT JNI LOCAL<br>
+            </td>
+            <td style="vertical-align: top;">0x02<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">thread serial number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">frame number in
+stack trace (-1 for empty)<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT JAVA FRAME<br>
+            </td>
+            <td style="vertical-align: top;">0x03<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">thread serial number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">frame number in
+stack trace (-1 for empty)</td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT NATIVE STACK<br>
+            </td>
+            <td style="vertical-align: top;">0x04<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">thread serial number<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT STICKY CLASS<br>
+            </td>
+            <td style="vertical-align: top;">0x05<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT THREAD BLOCK<br>
+            </td>
+            <td style="vertical-align: top;">0x06<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">thread serial number<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT MONITOR USED<br>
+            </td>
+            <td style="vertical-align: top;">0x07<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">ROOT THREAD OBJECT<br>
+            </td>
+            <td style="vertical-align: top;">0x08<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">thread object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">thread serial number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">CLASS DUMP<br>
+            </td>
+            <td style="vertical-align: top;">0x20<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">class object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">super class object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">class loader object
+ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">signers object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">protection domain
+object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">reserved<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">reserved<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">instance size (in
+bytes)<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u2<br>
+                  </td>
+                  <td style="vertical-align: top;">size of constant
+pool and number of records that follow:<br>
+                  <table style="text-align: left; width: 100%;"
+ border="1" cellpadding="2" cellspacing="2">
+                    <tbody>
+                      <tr>
+                        <td style="vertical-align: top;">u2<br>
+                        </td>
+                        <td style="vertical-align: top;">constant pool
+index<br>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align: top;">u1<br>
+                        </td>
+                        <td style="vertical-align: top;">type of entry:
+(See <a href="#Basic_Type">Basic Type</a>)<br>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align: top;">value<br>
+                        </td>
+                        <td style="vertical-align: top;">value of entry
+(u1, u2, u4, or u8 based on type of entry)<span
+ style="font-style: italic; color: rgb(255, 0, 0);"></span><br>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u2<br>
+                  </td>
+                  <td style="vertical-align: top;">Number of static
+fields:<br>
+                  <table style="text-align: left; width: 100%;"
+ border="1" cellpadding="2" cellspacing="2">
+                    <tbody>
+                      <tr>
+                        <td style="vertical-align: top;">ID<br>
+                        </td>
+                        <td style="vertical-align: top;">static field
+name string ID<br>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align: top;">u1<br>
+                        </td>
+                        <td style="vertical-align: top;">type of field:
+(See <a href="#Basic_Type">Basic Type</a>)<br>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align: top;">value<br>
+                        </td>
+                        <td style="vertical-align: top;">value of entry
+(u1, u2, u4, or u8 based on type of field) <span
+ style="font-style: italic; color: rgb(255, 0, 0);"></span><br>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u2<br>
+                  </td>
+                  <td style="vertical-align: top;">Number of instance
+fields (not including super class's)<br>
+                  <table style="text-align: left; width: 100%;"
+ border="1" cellpadding="2" cellspacing="2">
+                    <tbody>
+                      <tr>
+                        <td style="vertical-align: top;">ID<br>
+                        </td>
+                        <td style="vertical-align: top;">field name
+string ID<br>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align: top;">u1<br>
+                        </td>
+                        <td style="vertical-align: top;">type of field:
+(See <a href="#Basic_Type">Basic Type</a>)<br>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">INSTANCE DUMP<br>
+            </td>
+            <td style="vertical-align: top;">0x21<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">class object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of bytes that
+follow<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">[value]*<br>
+                  </td>
+                  <td style="vertical-align: top;">instance field
+values (this class, followed by super class, etc)<span
+ style="font-style: italic; color: rgb(255, 0, 0);"></span><br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">OBJECT ARRAY DUMP<br>
+            </td>
+            <td style="vertical-align: top;">0x22<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">array object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of elements<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">array class object
+ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">[ID]*<br>
+                  </td>
+                  <td style="vertical-align: top;">elements<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">PRIMITIVE ARRAY DUMP<br>
+            </td>
+            <td style="vertical-align: top;">0x23<br>
+            </td>
+            <td style="vertical-align: top;">
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">ID<br>
+                  </td>
+                  <td style="vertical-align: top;">array object ID<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of elements<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u1<br>
+                  </td>
+                  <td style="vertical-align: top;">element type (See <a
+ href="#Basic_Type">Basic Type</a>)<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">[u1]*<br>
+                  </td>
+                  <td style="vertical-align: top;">elements (packed
+array) </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HEAP DUMP END<br>
+      </td>
+      <td style="vertical-align: top;">0x2C<br>
+      </td>
+      <td style="vertical-align: top;">Terminates a series of HEAP DUMP
+SEGMENTS.&nbsp; Concatenation of HEAP DUMP SEGMENTS equals a HEAP DUMP.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">CPU SAMPLES<br>
+      </td>
+      <td style="vertical-align: top;">0x0D<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">total number of samples<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">number of traces that
+follow:<br>
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">number of samples<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">u4<br>
+                  </td>
+                  <td style="vertical-align: top;">stack trace serial
+number<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">CONTROL SETTINGS<br>
+      </td>
+      <td style="vertical-align: top;">0x0E<br>
+      </td>
+      <td style="vertical-align: top;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">u4<br>
+            </td>
+            <td style="vertical-align: top;">Bit mask flags:<br>
+            <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+              <tbody>
+                <tr>
+                  <td style="vertical-align: top;">0x1<br>
+                  </td>
+                  <td style="vertical-align: top;">alloc traces on/off<br>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">0x2<br>
+                  </td>
+                  <td style="vertical-align: top;">cpu sampling on/off<br>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">u2<br>
+            </td>
+            <td style="vertical-align: top;">stack trace depth<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<span style="font-weight: bold;"><br>
+</span><a name="Basic_Type"></a>Basic Type
+<table style="text-align: left; width: 296px; height: 221px;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">2<br>
+      </td>
+      <td style="vertical-align: top;">object<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">4<br>
+      </td>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">5<br>
+      </td>
+      <td style="vertical-align: top;">char<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">6<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">7<br>
+      </td>
+      <td style="vertical-align: top;">double<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">8<br>
+      </td>
+      <td style="vertical-align: top;">byte<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">9<br>
+      </td>
+      <td style="vertical-align: top;">short<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">10<br>
+      </td>
+      <td style="vertical-align: top;">int<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">11<br>
+      </td>
+      <td style="vertical-align: top;">long<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h3><a name="mozTocId348360" class="mozTocH3"></a>Handling of Arrays</h3>
+There will be a "LOAD CLASS" tag for type type of each array
+in the dump. In the LOAD CLASS record, the class name string ID
+will refer to a string with a human-readable name of the array
+type that is formatted as the type name would be in Java source
+code. Thus, the LOAD CLASS record for the type char[] will
+be "char[]", for short[][][] will be "short[][][]" and for
+MyType[] will be "MyType[]".
+<p></p>
+<h2><a name="mozTocId589424" class="mozTocH4"></a>Source Code<br>
+</h2>
+The source to HPROF is available in the JDK download in the
+demo/jvmti/hprof directory.
+<p><font size="-1"><b>*As used on this web site, the terms "Java
+Virtual Machine" or "JVM" mean a virtual machine for the Java platform.</b></font>
+</p>
+<p></p>
+<hr><!-- hhmts start --><!-- hhmts end -->
+</body>
+</html>
